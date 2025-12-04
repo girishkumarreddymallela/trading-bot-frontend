@@ -546,7 +546,7 @@
           const statusText = document.getElementById('statusText')
 
           if (data.active) {
-            statusText.textContent = `${data.symbol} · ${data.timeframe}`
+            statusText.textContent = `BTCUSD · ${data.timeframe}`
             indicator.className = 'status-indicator status-active'
           } else {
             statusText.textContent = 'Inactive'
@@ -590,10 +590,7 @@
               message.textContent = `Configuration updated successfully. Now monitoring ${timeframe} timeframe.`
               message.style.display = 'block'
 
-              const indicator = document.getElementById('statusIndicator')
-              const statusText = document.getElementById('statusText')
-              statusText.textContent = `${data.symbol} · ${timeframe}`
-              indicator.className = 'status-indicator status-active'
+              loadStatus()
             } else {
               throw new Error(data.error || 'Failed to update configuration')
             }
