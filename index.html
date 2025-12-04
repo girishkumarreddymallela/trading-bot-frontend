@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EMA Monitor | Delta Exchange</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI',
+          sans-serif;
+        background: #0a0e27;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 16px;
+        color: #e4e4e7;
+        overflow-x: hidden;
+      }
+
+      .container {
+        background: #131722;
+        border: 1px solid #2a2e39;
+        border-radius: 8px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        padding: 32px;
+        max-width: 600px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #2a2e39;
+      }
+
+      .title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      h1 {
+        color: #f7f7f8;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .exchange-badge {
+        background: #1e222d;
+        color: #848e9c;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid;
+      }
+
+      .status-active {
+        background: rgba(14, 203, 129, 0.1);
+        border-color: rgba(14, 203, 129, 0.3);
+        color: #0ecb81;
+      }
+
+      .status-inactive {
+        background: rgba(246, 70, 93, 0.1);
+        border-color: rgba(246, 70, 93, 0.3);
+        color: #f6465d;
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .ema-section {
+        background: #1e222d;
+        border: 1px solid #2a2e39;
+        border-radius: 6px;
+        padding: 20px;
+        margin-bottom: 24px;
+      }
+
+      .section-title {
+        color: #848e9c;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 16px;
+      }
+
+      .ema-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .ema-card {
+        background: #131722;
+        border: 1px solid #2a2e39;
+        border-radius: 6px;
+        padding: 16px;
+        text-align: center;
+        transition: border-color 0.2s;
+      }
+
+      .ema-card:hover {
+        border-color: #3a3e49;
+      }
+
+      .ema-label {
+        font-size: 10px;
+        color: #848e9c;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+      }
+
+      .ema-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #f7f7f8;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .form-group {
+        margin-bottom: 24px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 10px;
+        color: #848e9c;
+        font-weight: 500;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid #2a2e39;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #f7f7f8;
+        background: #1e222d;
+        transition: all 0.2s;
+        font-weight: 500;
+      }
+
+      input {
+        font-family: inherit;
+      }
+
+      select {
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23848e9c' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        padding-right: 40px;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      select option {
+        background: #1e222d;
+        color: #f7f7f8;
+        padding: 12px;
+        max-width: 100%;
+      }
+
+      input:hover,
+      select:hover {
+        border-color: #3a3e49;
+      }
+
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: #2962ff;
+        background: #131722;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 12px;
+        }
+
+        .container {
+          padding: 20px;
+          max-width: 100%;
+        }
+
+        h1 {
+          font-size: 16px;
+        }
+
+        .exchange-badge {
+          font-size: 10px;
+          padding: 3px 8px;
+        }
+
+        .header {
+          flex-direction: column;
+          gap: 12px;
+          align-items: flex-start;
+        }
+
+        .status-indicator {
+          font-size: 11px;
+          padding: 5px 10px;
+        }
+
+        .ema-section {
+          padding: 16px;
+        }
+
+        .ema-value {
+          font-size: 22px;
+        }
+
+        .ema-card {
+          padding: 12px;
+        }
+
+        input,
+        select {
+          font-size: 16px;
+          padding: 12px 14px;
+        }
+
+        select {
+          padding-right: 36px;
+          background-position: right 12px center;
+        }
+      }
+
+      .btn {
+        width: 100%;
+        padding: 14px;
+        background: #2962ff;
+        color: #ffffff;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .btn:hover {
+        background: #1e53e5;
+      }
+
+      .btn:active {
+        transform: scale(0.98);
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .message {
+        margin-top: 16px;
+        padding: 12px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        display: none;
+        border: 1px solid;
+      }
+
+      .message.success {
+        background: rgba(14, 203, 129, 0.1);
+        border-color: rgba(14, 203, 129, 0.3);
+        color: #0ecb81;
+        display: block;
+      }
+
+      .message.error {
+        background: rgba(246, 70, 93, 0.1);
+        border-color: rgba(246, 70, 93, 0.3);
+        color: #f6465d;
+        display: block;
+      }
+
+      .info-box {
+        background: rgba(41, 98, 255, 0.08);
+        border: 1px solid rgba(41, 98, 255, 0.2);
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-top: 20px;
+        font-size: 12px;
+        color: #848e9c;
+        line-height: 1.6;
+      }
+
+      .telegram-box {
+        background: rgba(14, 203, 129, 0.08);
+        border: 1px solid rgba(14, 203, 129, 0.2);
+        padding: 16px;
+        border-radius: 6px;
+        margin-top: 20px;
+        text-align: center;
+      }
+
+      .telegram-box p {
+        color: #848e9c;
+        font-size: 13px;
+        margin-bottom: 12px;
+        line-height: 1.5;
+      }
+
+      .telegram-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background: #0ecb81;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+      }
+
+      .telegram-btn:hover {
+        background: #0bb871;
+        transform: translateY(-1px);
+      }
+
+      .loader {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #ffffff;
+        animation: spin 0.6s linear infinite;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      #loginScreen {
+        text-align: center;
+      }
+
+      #loginScreen h2 {
+        color: #f7f7f8;
+        font-size: 18px;
+        margin-bottom: 24px;
+      }
+
+      #mainApp {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Login Screen -->
+      <div id="loginScreen">
+        <div class="header" style="border: none; margin-bottom: 40px">
+          <div class="title" style="margin: 0 auto">
+            <h1>EMA Monitor</h1>
+            <span class="exchange-badge">Delta Exchange</span>
+          </div>
+        </div>
+        <h2>Enter Access Key</h2>
+        <form id="loginForm">
+          <div class="form-group">
+            <input
+              type="password"
+              id="passkey"
+              placeholder="Enter passkey"
+              required
+              autocomplete="off"
+            />
+          </div>
+          <button type="submit" class="btn">Access Dashboard</button>
+          <div id="loginMessage" class="message"></div>
+        </form>
+      </div>
+
+      <!-- Main App (Hidden by default) -->
+      <div id="mainApp">
+        <div class="header">
+          <div class="title">
+            <h1>EMA Monitor</h1>
+            <span class="exchange-badge">Delta Exchange</span>
+          </div>
+          <div id="statusIndicator" class="status-indicator status-inactive">
+            <span class="status-dot"></span>
+            <span id="statusText">Checking...</span>
+          </div>
+        </div>
+
+        <div class="ema-section">
+          <div class="section-title">Exponential Moving Averages</div>
+          <div class="ema-grid">
+            <div class="ema-card">
+              <div class="ema-label">Short</div>
+              <div class="ema-value">9</div>
+            </div>
+            <div class="ema-card">
+              <div class="ema-label">Medium</div>
+              <div class="ema-value">20</div>
+            </div>
+            <div class="ema-card">
+              <div class="ema-label">Long</div>
+              <div class="ema-value">50</div>
+            </div>
+          </div>
+        </div>
+
+        <form id="configForm">
+          <div class="form-group">
+            <label for="timeframe">Timeframe Configuration</label>
+            <select id="timeframe" name="timeframe" required>
+              <option value="5s">5 Seconds</option>
+              <option value="15s">15 Seconds</option>
+              <option value="30s">30 Seconds</option>
+              <option value="1m">1 Minute</option>
+              <option value="3m">3 Minutes</option>
+              <option value="5m">5 Minutes</option>
+              <option value="15m" selected>15 Minutes</option>
+              <option value="30m">30 Minutes</option>
+              <option value="1h">1 Hour</option>
+              <option value="2h">2 Hours</option>
+              <option value="4h">4 Hours</option>
+              <option value="6h">6 Hours</option>
+              <option value="12h">12 Hours</option>
+              <option value="1d">1 Day</option>
+              <option value="1w">1 Week</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn" id="submitBtn">
+            Apply Configuration
+          </button>
+        </form>
+
+        <div id="message" class="message"></div>
+
+        <div class="telegram-box">
+          <p>
+            To get automatic updates when crossovers happen, join our Telegram
+            group
+          </p>
+          <a
+            href="https://t.me/+7VmvaRUL-mNmNTE1"
+            target="_blank"
+            class="telegram-btn"
+            >Join Telegram Group</a
+          >
+        </div>
+
+        <div class="info-box">
+          Timeframe changes will restart the monitoring service with the new
+          interval configuration.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // IMPORTANT: Update these values
+      const API_URL = 'http://localhost:5000'
+      const PASSKEY = 'trader2024' // Change this to your desired passkey
+
+      // Login handling
+      document.getElementById('loginForm').addEventListener('submit', (e) => {
+        e.preventDefault()
+        const passkey = document.getElementById('passkey').value
+        const loginMessage = document.getElementById('loginMessage')
+
+        if (passkey === PASSKEY) {
+          document.getElementById('loginScreen').style.display = 'none'
+          document.getElementById('mainApp').style.display = 'block'
+          loadStatus()
+        } else {
+          loginMessage.className = 'message error'
+          loginMessage.textContent = 'Invalid passkey. Please try again.'
+          loginMessage.style.display = 'block'
+        }
+      })
+
+      // Load current status
+      async function loadStatus() {
+        try {
+          const response = await fetch(`${API_URL}/status`)
+          const data = await response.json()
+
+          const indicator = document.getElementById('statusIndicator')
+          const statusText = document.getElementById('statusText')
+
+          if (data.active) {
+            statusText.textContent = `${data.symbol} · ${data.timeframe}`
+            indicator.className = 'status-indicator status-active'
+          } else {
+            statusText.textContent = 'Inactive'
+            indicator.className = 'status-indicator status-inactive'
+          }
+
+          document.getElementById('timeframe').value = data.timeframe
+        } catch (error) {
+          console.error('Failed to load status:', error)
+          document.getElementById('statusText').textContent = 'Connection Error'
+        }
+      }
+
+      // Handle form submission
+      document
+        .getElementById('configForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault()
+
+          const submitBtn = document.getElementById('submitBtn')
+          const message = document.getElementById('message')
+          const timeframe = document.getElementById('timeframe').value
+
+          submitBtn.disabled = true
+          submitBtn.innerHTML = 'Applying... <span class="loader"></span>'
+          message.style.display = 'none'
+
+          try {
+            const response = await fetch(`${API_URL}/update-config`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ timeframe }),
+            })
+
+            const data = await response.json()
+
+            if (response.ok) {
+              message.className = 'message success'
+              message.textContent = `Configuration updated successfully. Now monitoring ${timeframe} timeframe.`
+              message.style.display = 'block'
+
+              const indicator = document.getElementById('statusIndicator')
+              const statusText = document.getElementById('statusText')
+              statusText.textContent = `${data.symbol} · ${timeframe}`
+              indicator.className = 'status-indicator status-active'
+            } else {
+              throw new Error(data.error || 'Failed to update configuration')
+            }
+          } catch (error) {
+            message.className = 'message error'
+            message.textContent = `Error: ${error.message}`
+            message.style.display = 'block'
+          } finally {
+            submitBtn.disabled = false
+            submitBtn.textContent = 'Apply Configuration'
+          }
+        })
+    </script>
+  </body>
+</html>
